@@ -1,5 +1,8 @@
 /raw_data
 /.vscode/settings.json
+/feature_extracted
+/output_images
+/cropped_data
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
