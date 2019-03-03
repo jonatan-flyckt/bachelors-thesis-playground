@@ -3,10 +3,10 @@
 /feature_extracted
 /output_images
 /cropped_data
-.joblib
-.npy
-.eps
-.tif
+*.joblib
+*.npy
+*.eps
+*.tif
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
