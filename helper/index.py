@@ -1,4 +1,6 @@
 import numpy as np
+from numpy import random, nanmax, argmax, unravel_index
+from scipy.spatial.distance import pdist, squareform
 from scipy.ndimage.filters import generic_filter as gf
 import scipy.stats.mstats as ms
 from scipy.stats import skew
@@ -397,6 +399,21 @@ def slopeNonDitchAmplification(arr):
 POST-PROCESSING
 """
 
+def find_max_distance(A):
+    """
+    Returns the maximum distance from  2x points
+    each point is represented by a x,y cord.
+    """
+    #assert(A.shape[1] == 2)
+    return nanmax(squareform(pdist(A)))
+
+def get_max_distance_from_list(clusters):
+    """
+    Wrapper around find_max_distance
+    to handle a list of 'clusters'
+    """
+    return list(map(find_max_distance, clusters))
+
 def rasterToZones(arr, zoneSize, threshold):
     newArr = arr.copy()
     print(len(arr))
@@ -439,44 +456,52 @@ def probaToZones(arr, zoneSize, threshold):
                             newArr[i + k][j + l] = 0
     return newArr
 
-def customRemoveNoise(arr, radius, threshold):
+def customRemoveNoise(arr, radius, threshold, selfThreshold):
     newArr = arr.copy()
     print("creating maxArr")
     maxArr = gf(arr, np.nanmax, footprint=create_circular_mask(radius))
     print("maxArr created")
     for i in range(len(arr)):
         for j in range(len(arr[i])):
-            if maxArr[i][j] < threshold:
+            if maxArr[i][j] < threshold and arr[i][j] < selfThreshold:
                 newArr[i][j] *= 0.25
     return newArr
 
 def probaNoiseReduction(arr):
     deNoise15 = denoise_bilateral(arr, sigma_spatial=15, multichannel=False)
-    deNoiseStepTwo = customRemoveNoise(deNoise15, 10, 0.65)
+    deNoiseStepTwo = customRemoveNoise(deNoise15, 10, 0.8, 0.5)
     return deNoiseStepTwo
 
 
 def probaPostProcess(arr):
     deNoise = probaNoiseReduction(arr)
-    gapFilled = conicProbaPostProcessing(conicProbaPostProcessing(conicProbaPostProcessing(deNoise, 15, 0.2), 10, 0.4), 6, 0.4)
-    zonesArr = probaToZones(gapFilled, 6, 0.15)
-    noIslands = removeIslands(zonesArr, 1000)
+    gapFilled = conicProbaPostProcessing(conicProbaPostProcessing(deNoise, 10, 0.4), 6, 0.4)
+    zonesArr = probaToZones(gapFilled, 6, 0.2)
+    noIslands = removeIslands(zonesArr, 1500, 3000, 30)
     return noIslands
 
 
-def removeIslands(arr, threshold):
+def removeIslands(arr, lowerIslandThreshold, upperIslandThreshold, ratioThreshold):
     newArr = arr.copy()
-    examinedPoints = []
+    examinedPoints = set()
     for i in range(len(arr)):
         print(i)
         for j in range(len(arr[i])):
             if arr[i][j] == 1 and (i, j) not in examinedPoints:
                 island = getIslandArray(arr, (i, j))
+                cluster_distance = find_max_distance(island)
                 islandSize = len(island)
+                if upperIslandThreshold > islandSize > lowerIslandThreshold:
+                    print("island size:", islandSize)
+                    print("cluster distance:", cluster_distance)
+                    print("ratio:", islandSize / cluster_distance)
                 for k in range(islandSize):
-                    examinedPoints.append(island[k])
-                    if islandSize < threshold:
-                        newArr[island[k][0]][island[k][1]] = 0
+                    examinedPoints.add(island[k])
+                    if islandSize < upperIslandThreshold:
+                        if islandSize < lowerIslandThreshold:
+                            newArr[island[k][0]][island[k][1]] = 0
+                        elif islandSize / cluster_distance > ratioThreshold:
+                            newArr[island[k][0]][island[k][1]] = 0
     return newArr
 
 
