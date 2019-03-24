@@ -477,20 +477,24 @@ def probaPostProcess(arr):
     deNoise = probaNoiseReduction(arr)
     gapFilled = conicProbaPostProcessing(conicProbaPostProcessing(deNoise, 10, 0.4), 6, 0.4)
     zonesArr = probaToZones(gapFilled, 6, 0.2)
-    noIslands = removeIslands(zonesArr, 1500, 3000, 30)
+    noIslands = removeIslands(zonesArr, 1000, 3000, 18)
     return noIslands
 
 
-def removeIslands(arr, lowerIslandThreshold, upperIslandThreshold, ratioThreshold):
+def removeIslands(arr, zoneSize, lowerIslandThreshold, upperIslandThreshold, ratioThreshold):
     newArr = arr.copy()
     examinedPoints = set()
     for i in range(len(arr)):
         print(i)
         for j in range(len(arr[i])):
             if arr[i][j] == 1 and (i, j) not in examinedPoints:
-                island = getIslandArray(arr, (i, j))
-                cluster_distance = find_max_distance(island)
+                island = getIslandArray(arr, (i, j), zoneSize)
                 islandSize = len(island)
+                print("island size:", islandSize)
+                if islandSize < upperIslandThreshold:
+                    print("attempting to get distance")
+                    cluster_distance = find_max_distance(island)
+                    print("distance found", cluster_distance)
                 if upperIslandThreshold > islandSize > lowerIslandThreshold:
                     print("island size:", islandSize)
                     print("cluster distance:", cluster_distance)
@@ -505,32 +509,75 @@ def removeIslands(arr, lowerIslandThreshold, upperIslandThreshold, ratioThreshol
     return newArr
 
 
-def getIslandArray(arr, index):
+def getIslandArray(arr, index, zoneSize):
     arrayOfPoints = []
     iMax = len(arr) - 1
     jMax = len(arr[0]) - 1
     i = index[0]
     j = index[1]
     FIFOQueue = deque([(i, j)])
-    examinedElements = [(i, j)]
+    examinedElements = set()
+    examinedElements.add((i, j))
     while (len(FIFOQueue) > 0):
         currentIndex = FIFOQueue.popleft()
         i = currentIndex[0]
         j = currentIndex[1]
         if i >= 0 and i < iMax and j >= 0 and j < jMax and arr[i][j] == 1:
             arrayOfPoints.append((i, j))
+            #add horizontally and vertically
             if (i+1, j) not in examinedElements:
                 FIFOQueue.append((i+1, j))
-                examinedElements.append((i+1, j))
+                examinedElements.add((i+1, j))
             if (i-1, j) not in examinedElements:
                 FIFOQueue.append((i-1, j))
-                examinedElements.append((i-1, j))
+                examinedElements.add((i-1, j))
             if (i, j+1) not in examinedElements:
                 FIFOQueue.append((i, j+1))
-                examinedElements.append((i, j+1))
+                examinedElements.add((i, j+1))
             if (i, j-1) not in examinedElements:
                 FIFOQueue.append((i, j-1))
-                examinedElements.append((i, j-1))
+                examinedElements.add((i, j-1))
+            #add diagonally
+            if (i+1, j+1) not in examinedElements:
+                FIFOQueue.append((i+1, j+1))
+                examinedElements.add((i+1, j+1))
+            if (i-1, j+1) not in examinedElements:
+                FIFOQueue.append((i-1, j+1))
+                examinedElements.add((i-1, j+1))
+            if (i+1, j-1) not in examinedElements:
+                FIFOQueue.append((i+1, j-1))
+                examinedElements.add((i+1, j-1))
+            if (i-1, j-1) not in examinedElements:
+                FIFOQueue.append((i-1, j-1))
+                examinedElements.add((i-1, j-1))
+               
+            #Add one zone away
+            #add horizontally and vertically
+            if (i+1 + zoneSize, j) not in examinedElements:
+                FIFOQueue.append((i+1 + zoneSize, j))
+                examinedElements.add((i+1 + zoneSize, j))
+            if (i-1 - zoneSize, j) not in examinedElements:
+                FIFOQueue.append((i-1 - zoneSize, j))
+                examinedElements.add((i-1 - zoneSize, j))
+            if (i, j+1 + zoneSize) not in examinedElements:
+                FIFOQueue.append((i, j+1 + zoneSize))
+                examinedElements.add((i, j+1 + zoneSize))
+            if (i, j-1 - zoneSize) not in examinedElements:
+                FIFOQueue.append((i, j-1 - zoneSize))
+                examinedElements.add((i, j-1 - zoneSize))
+            #add diagonally
+            if (i+1 + zoneSize, j+1 + zoneSize) not in examinedElements:
+                FIFOQueue.append((i+1 + zoneSize, j+1 + zoneSize))
+                examinedElements.add((i+1 + zoneSize, j+1 + zoneSize))
+            if (i-1 - zoneSize, j+1 + zoneSize) not in examinedElements:
+                FIFOQueue.append((i-1 - zoneSize, j+1 + zoneSize))
+                examinedElements.add((i-1 - zoneSize, j+1 + zoneSize))
+            if (i+1 + zoneSize, j-1 - zoneSize) not in examinedElements:
+                FIFOQueue.append((i+1 + zoneSize, j-1 - zoneSize))
+                examinedElements.add((i+1 + zoneSize, j-1 - zoneSize))
+            if (i-1 - zoneSize, j-1 - zoneSize) not in examinedElements:
+                FIFOQueue.append((i-1 - zoneSize, j-1 - zoneSize))
+                examinedElements.add((i-1 - zoneSize, j-1 - zoneSize))
     return arrayOfPoints
 
 def conicProbaPostProcessing(arr, maskRadius, threshold):
