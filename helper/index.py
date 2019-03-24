@@ -485,16 +485,12 @@ def removeIslands(arr, zoneSize, lowerIslandThreshold, upperIslandThreshold, rat
     newArr = arr.copy()
     examinedPoints = set()
     for i in range(len(arr)):
-        print(i)
         for j in range(len(arr[i])):
             if arr[i][j] == 1 and (i, j) not in examinedPoints:
                 island = getIslandArray(arr, (i, j), zoneSize)
                 islandSize = len(island)
-                print("island size:", islandSize)
                 if islandSize < upperIslandThreshold:
-                    print("attempting to get distance")
                     cluster_distance = find_max_distance(island)
-                    print("distance found", cluster_distance)
                 if upperIslandThreshold > islandSize > lowerIslandThreshold:
                     print("island size:", islandSize)
                     print("cluster distance:", cluster_distance)
