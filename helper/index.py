@@ -469,15 +469,17 @@ def customRemoveNoise(arr, radius, threshold, selfThreshold):
 
 def probaNoiseReduction(arr):
     deNoise15 = denoise_bilateral(arr, sigma_spatial=15, multichannel=False)
-    deNoiseStepTwo = customRemoveNoise(deNoise15, 10, 0.8, 0.5)
+    deNoiseStepTwo = customRemoveNoise(deNoise15, 10, 0.9, 0.5)
     return deNoiseStepTwo
 
 
-def probaPostProcess(arr):
+def probaPostProcess(arr, zoneSize, probaThreshold):
     deNoise = probaNoiseReduction(arr)
-    gapFilled = conicProbaPostProcessing(conicProbaPostProcessing(deNoise, 10, 0.4), 6, 0.4)
-    zonesArr = probaToZones(gapFilled, 6, 0.2)
-    noIslands = removeIslands(zonesArr, 1000, 3000, 18)
+    gapFilled = conicProbaPostProcessing(conicProbaPostProcessing(deNoise, 10, 0.35), 6, 0.35)
+    zonesArr = probaToZones(gapFilled, zoneSize, probaThreshold)   
+    noIslands = removeIslands(zonesArr, zoneSize*5, 1500, 5000, 18)
+    noIslands = removeIslands(noIslands, zoneSize, 800, 3000, 18)
+    noIslands = removeIslands(noIslands, 0, 400, 1600, 14)
     return noIslands
 
 
@@ -621,6 +623,10 @@ def conicProbaPostProcessing(arr, maskRadius, threshold):
                         updatePixel *= 1.2
                     elif updatePixel < 0.75:
                         updatePixel *= 1.15
+                    elif updatePixel < 0.85:
+                        updatePixel *= 1.1
+                    elif updatePixel < 0.9:
+                        updatePixel *= 1.05
                     newArr[i][j] = updatePixel
     print(examinedPoints)
     print(amountOfUpdated)
