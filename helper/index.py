@@ -20,7 +20,7 @@ from skimage.util import random_noise
 from collections import deque
 from sklearn.ensemble import RandomForestClassifier
 from joblib import dump, load
-from sklearn.metrics import cohen_kappa_score
+from sklearn.metrics import cohen_kappa_score, accuracy_score, recall_score, confusion_matrix, precision_score
 
 
 """
@@ -28,36 +28,19 @@ GENERAL FUNCTIONS
 """
 
 def calculateAndPrintResults(prediction, evaluation):
-    evaluatedTruePoints = 0
-    evaluatedZeroPoints = 0
-    correctPredictions = 0
-    correctZeroPredictions = 0
-    falseZeroPredictions = 0
-    falseTruePredictions = 0
-    for i in range(len(evaluation)):
-        for j in range(len(evaluation[i])):
-            if evaluation[i][j] == 1:
-                evaluatedTruePoints += 1
-                if prediction[i][j] == 1:
-                    correctPredictions += 1
-                else:
-                    falseZeroPredictions += 1
-            else:
-                evaluatedZeroPoints += 1
-                if prediction[i][j] == 0:
-                    correctZeroPredictions += 1
-                else:
-                    falseTruePredictions += 1
+    print("points examined:")
+    print(len(prediction.reshape(-1)))
+    matrix = confusion_matrix(evaluation.reshape(-1), prediction.reshape(-1))
+    print("Confusion matrix:")
+    print(matrix)   
     print("accuracy rate:")
-    print(round((correctPredictions + correctZeroPredictions) / (evaluatedTruePoints + evaluatedZeroPoints), 4))
-    print("precision rate:") 
-    print(round(correctPredictions / (correctPredictions + falseTruePredictions), 4))
+    print(accuracy_score(evaluation.reshape(-1), prediction.reshape(-1)))
     print("true positive rate:") 
-    print(round(correctPredictions/evaluatedPoints, 4))
-    print("false positive rate:") 
-    print(round(falseTruePredictions / (falseTruePredictions + correctZeroPredictions), 4))
+    print(recall_score(evaluation.reshape(-1), prediction.reshape(-1)))
+    print("precision rate:") 
+    print(round(precision_score(evaluation.reshape(-1), prediction.reshape(-1)), 4))
     processed_kappa = cohen_kappa_score(evaluation.reshape(-1), prediction.reshape(-1))
-    print("Processed kappa: ", round(processed_kappa, 4))
+    print("Kappa rating: ", round(processed_kappa, 4))
 
 def extract_numpy_files_in_folder(path, skip=[]):
     """
