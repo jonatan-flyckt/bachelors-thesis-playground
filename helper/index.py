@@ -20,11 +20,27 @@ from skimage.util import random_noise
 from collections import deque
 from sklearn.ensemble import RandomForestClassifier
 from joblib import dump, load
+from sklearn.metrics import cohen_kappa_score, accuracy_score, recall_score, confusion_matrix, precision_score
 
 
 """
 GENERAL FUNCTIONS
 """
+
+def calculateAndPrintResults(prediction, evaluation):
+    print("points examined:")
+    print(len(prediction.reshape(-1)))
+    matrix = confusion_matrix(evaluation.reshape(-1), prediction.reshape(-1))
+    print("Confusion matrix:")
+    print(matrix)   
+    print("accuracy rate:")
+    print(accuracy_score(evaluation.reshape(-1), prediction.reshape(-1)))
+    print("true positive rate:") 
+    print(recall_score(evaluation.reshape(-1), prediction.reshape(-1)))
+    print("precision rate:") 
+    print(round(precision_score(evaluation.reshape(-1), prediction.reshape(-1)), 4))
+    processed_kappa = cohen_kappa_score(evaluation.reshape(-1), prediction.reshape(-1))
+    print("Kappa rating: ", round(processed_kappa, 4))
 
 def extract_numpy_files_in_folder(path, skip=[]):
     """
@@ -469,7 +485,7 @@ def customRemoveNoise(arr, radius, threshold, selfThreshold):
 
 def probaNoiseReduction(arr):
     deNoise15 = denoise_bilateral(arr, sigma_spatial=15, multichannel=False)
-    deNoiseStepTwo = customRemoveNoise(deNoise15, 10, 0.9, 0.5)
+    deNoiseStepTwo = customRemoveNoise(deNoise15, 10, 0.9, 0aforementioned.5)
     return deNoiseStepTwo
 
 
