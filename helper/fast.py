@@ -26,7 +26,7 @@ def create_circular_mask(radius):
 
 
 @jit(nopython=True)
-def _normalize_impoundment(arr):
+def _reclassify_impoundment(arr):
     """
     Internaly used normalization of impoundment index reclassification different threashhold
     """
@@ -57,7 +57,7 @@ def impoundmentAmplification(arr, mask_radius=10):
     """
     Amplicatates ditches
     """
-    norm_arr = da.from_array(_normalize_impoundment(arr), chunks=(800, 800))
+    norm_arr = da.from_array(_reclassify_impoundment(arr), chunks=(800, 800))
     mask = create_circular_mask(mask_radius)
     return d_gf(d_gf(d_gf(norm_arr, np.nanmean, footprint=mask), np.nanmean, footprint=mask), np.nanmedian, footprint=mask).compute(scheduler='processes')
 

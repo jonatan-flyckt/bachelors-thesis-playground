@@ -16,6 +16,7 @@ import random
 import math
 from skimage.restoration import (denoise_tv_chambolle, denoise_bilateral, denoise_wavelet, estimate_sigma)
 from skimage import data, img_as_float
+from skimage.filters import gabor
 from skimage.util import random_noise
 from collections import deque
 from sklearn.ensemble import RandomForestClassifier
@@ -286,6 +287,22 @@ def skyViewNonDitchAmplification(arr):
             else:
                 newArr[i][j] = 1
     return gf(newArr, np.nanmean, footprint=create_circular_mask(10))
+
+    def skyViewGabor():
+        gabors = []
+        for i in np.arange(0.03, 0.08, 0.01):
+            print(i)
+            for j in np.arange(0, 3, 0.52):
+                gabors.append(gabor(skyViewArr, theta=j, frequency=i)[0])
+        merged = skyViewArr.copy()
+            for i in range(len(merged)):
+                for j in range(len(merged[i])):
+                    merged[i][j] = 0
+            for i in range(len(merged)):
+                for j in range(len(merged[i])):
+                    for k in range(len(gabors)):
+                        merged[i][j] += gabors[k][i][j]
+        return merged
 
 
 """------------------------------------------------------------------------------------------------------------------------------"""
