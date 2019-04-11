@@ -70,8 +70,8 @@ def _reclassify_hpmf_filter(arr):
     binary = np.copy(arr)
     for i in range(len(arr)):
         for j in range(len(arr[i])):
-            if arr[i][j] < 1000000 and arr[i][j] > -1000000:
-                binary[i][j] = 1000000000
+            if arr[i][j] < 0.000001 and arr[i][j] > -0.000001:
+                binary[i][j] = 100
             else:
                 binary[i][j] = 0
     return binary
@@ -87,19 +87,19 @@ def _reclassify_hpmf_filter_mean(arr):
         for j in range(len(arr[i])):
             if arr[i][j] < 1:
                 reclassify[i][j] = 0
-            elif arr[i][j] < 30000000:
+            elif arr[i][j] < 3:
                 reclassify[i][j] = 1
-            elif arr[i][j] < 70000000:
+            elif arr[i][j] < 7:
                 reclassify[i][j] = 2
-            elif arr[i][j] < 100000000:
+            elif arr[i][j] < 10:
                 reclassify[i][j] = 50
-            elif arr[i][j] < 200000000:
+            elif arr[i][j] < 20:
                 reclassify[i][j] = 75
-            elif arr[i][j] < 500000000:
+            elif arr[i][j] < 50:
                 reclassify[i][j] = 100
-            elif arr[i][j] < 800000000:
+            elif arr[i][j] < 80:
                 reclassify[i][j] = 300
-            elif arr[i][j] < 1000000000:
+            elif arr[i][j] < 100:
                 reclassify[i][j] = 600
             else:
                 reclassify[i][j] = 1000

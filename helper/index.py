@@ -485,7 +485,7 @@ def customRemoveNoise(arr, radius, threshold, selfThreshold):
 
 def probaNoiseReduction(arr):
     deNoise15 = denoise_bilateral(arr, sigma_spatial=15, multichannel=False)
-    deNoiseStepTwo = customRemoveNoise(deNoise15, 10, 0.9, 0aforementioned.5)
+    deNoiseStepTwo = customRemoveNoise(deNoise15, 10, 0.9, 0.5)
     return deNoiseStepTwo
 
 
