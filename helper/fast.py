@@ -35,17 +35,17 @@ def _normalize_impoundment(arr):
         for j in range(len(arr[i])):
             if new_arr[i, j] == 0:
                 new_arr[i, j] = 0
-            elif new_arr[i, j] < 1000000000:
+            elif new_arr[i, j] < 0.002:
                 new_arr[i, j] = 5
-            elif arr[i, j] < 1010000000:
+            elif arr[i, j] < 0.005:
                 new_arr[i, j] = 50
-            elif arr[i, j] < 1020000000:
+            elif arr[i, j] < 0.02:
                 new_arr[i, j] = 100
-            elif arr[i, j] < 1030000000:
+            elif arr[i, j] < 0.05:
                 new_arr[i, j] = 1000
-            elif arr[i, j] < 1040000000:
+            elif arr[i, j] < 0.1:
                 new_arr[i, j] = 10000
-            elif arr[i, j] < 1050000000:
+            elif arr[i, j] < 0.3:
                 new_arr[i, j] = 100000
             else:
                 new_arr[i, j] = 1000000
