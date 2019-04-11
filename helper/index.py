@@ -343,7 +343,7 @@ def streamAmplification(arr):
     streamAmp = arr.copy()
     for i in range(len(streamAmp)):
         for j in range(len(streamAmp[i])):
-            if streamAmp[i][j] < 10:
+            if streamAmp[i][j] < 14:
                 streamAmp[i][j] = 0
     morphed = morph.grey_dilation(streamAmp, structure = create_circular_mask(25))
     smoothedOut = gf(morphed, np.nanmean, footprint= create_circular_mask(10))
