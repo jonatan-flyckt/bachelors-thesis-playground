@@ -22,6 +22,8 @@ from collections import deque
 from sklearn.ensemble import RandomForestClassifier
 from joblib import dump, load
 from sklearn.metrics import cohen_kappa_score, accuracy_score, recall_score, confusion_matrix, precision_score
+from numba import jit
+from numba import prange
 
 
 """
@@ -288,21 +290,22 @@ def skyViewNonDitchAmplification(arr):
                 newArr[i][j] = 1
     return gf(newArr, np.nanmean, footprint=create_circular_mask(10))
 
-    def skyViewGabor():
-        gabors = []
-        for i in np.arange(0.03, 0.08, 0.01):
-            print(i)
-            for j in np.arange(0, 3, 0.52):
-                gabors.append(gabor(skyViewArr, theta=j, frequency=i)[0])
-        merged = skyViewArr.copy()
-            for i in range(len(merged)):
-                for j in range(len(merged[i])):
-                    merged[i][j] = 0
-            for i in range(len(merged)):
-                for j in range(len(merged[i])):
-                    for k in range(len(gabors)):
-                        merged[i][j] += gabors[k][i][j]
-        return merged
+@jit
+def skyViewGabor(skyViewArr):
+    gabors = []
+    for i in np.arange(0.03, 0.08, 0.01):
+        print(i)
+        for j in np.arange(0, 3, 0.52):
+            gabors.append(gabor(skyViewArr, theta=j, frequency=i)[0])
+    merged = skyViewArr.copy()
+    for i in range(len(merged)):
+        for j in range(len(merged[i])):
+            merged[i][j] = 0
+    for i in range(len(merged)):
+        for j in range(len(merged[i])):
+            for k in range(len(gabors)):
+                merged[i][j] += gabors[k][i][j]
+    return merged
 
 
 """------------------------------------------------------------------------------------------------------------------------------"""
@@ -335,6 +338,16 @@ def impoundmentAmplification(arr):
 
     mask = create_circular_mask(10)
     return gf(gf(gf(newArr, np.nanmean, footprint=mask), np.nanmean, footprint=mask), np.nanmedian, footprint=mask)
+
+def streamAmplification(arr):
+    streamAmp = arr.copy()
+    for i in range(len(streamAmp)):
+        for j in range(len(streamAmp[i])):
+            if streamAmp[i][j] < 10:
+                streamAmp[i][j] = 0
+    morphed = morph.grey_dilation(streamAmp, structure = create_circular_mask(25))
+    smoothedOut = gf(morphed, np.nanmean, footprint= create_circular_mask(10))
+    return smoothedOut
 
 
 """------------------------------------------------------------------------------------------------------------------------------"""
