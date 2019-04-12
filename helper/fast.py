@@ -7,9 +7,14 @@ from numba import prange
 
 # Multithreading
 import dask.array as da
+import dask as dk
+dk.config.set(scheduler='processes')
+
 from dask_image.ndfilters import generic_filter as d_gf
 
 from collections import deque
+
+from skimage.filters import gabor
 
 
 @jit
@@ -151,6 +156,35 @@ def _reclassify_sky_view_non_ditch_amp(arr):
             else:
                 new_arr[i, j] = 1
     return new_arr
+
+
+@jit
+def _skyViewGabor(merged, gabors):
+    for i in range(len(merged)):
+        for j in range(len(merged[i])):
+            merged[i][j] = 0
+    for i in range(len(merged)):
+        for j in range(len(merged[i])):
+            for k in range(len(gabors)):
+                merged[i][j] += gabors[k][i][j]
+    return merged
+
+#@jit
+def skyViewGabor(skyViewArr):
+    delayed_gabors = []
+    for i in np.arange(0.03, 0.08, 0.01):
+        for j in np.arange(0, 3, 0.52):
+            delayed_gabor = dk.delayed(gabor)(skyViewArr, i, j)[0]
+            delayed_gabors.append(delayed_gabor)
+    gabors = dk.compute(delayed_gabors)
+    print(type(gabors[0]))
+    print(len(gabors[0]))
+    #print(len(gabors))
+    #gabors = gabors.map(lambda x : x[0])
+    return _skyViewGabor(skyViewArr.copy(), gabors[0])
+
+
+
 
 
 @jit
