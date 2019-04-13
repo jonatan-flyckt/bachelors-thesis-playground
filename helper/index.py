@@ -192,9 +192,9 @@ DEM
 
 def DEMDitchDetection(arr):
     newArr = arr.copy()
-    maxArr = gf(arr, np.amax, footprint=helpers.create_circular_mask(30))
-    minArr = gf(arr, np.amin, footprint=helpers.create_circular_mask(10))
-    meanArr = gf(arr, np.median, footprint=helpers.create_circular_mask(10))
+    maxArr = gf(arr, np.amax, footprint=create_circular_mask(30))
+    minArr = gf(arr, np.amin, footprint=create_circular_mask(10))
+    meanArr = gf(arr, np.median, footprint=create_circular_mask(10))
     minMaxDiff = arr.copy()
     for i in range(len(arr)):
         for j in range(len(arr[i])):
@@ -202,8 +202,8 @@ def DEMDitchDetection(arr):
                 minMaxDiff[i][j] = 1
             else:
                 minMaxDiff[i][j] = 0
-    closing = morph.binary_closing(minMaxDiff, structure=helpers.create_circular_mask(10))
-    closing2 = morph.binary_closing(closing, structure=helpers.create_circular_mask(10))
+    closing = morph.binary_closing(minMaxDiff, structure=create_circular_mask(10))
+    closing2 = morph.binary_closing(closing, structure=create_circular_mask(10))
     for i in range(len(arr)):
         for j in range(len(arr[i])):
             if arr[i][j] < meanArr[i][j] - 0.1:
@@ -337,14 +337,16 @@ def skyViewGabor(skyViewArr):
                 merged[i][j] += gabors[k][i][j]
     return merged
 
-def skyViewStreamRemoval(conicFeature, streamAmp):
-    conicStreamRemoval = conicFeature.copy()
+#Used for skyview conic filter, hpmf filter, hpmf gabor and skyview gabor
+def skyViewHPMFGaborStreamRemoval(feature, streamAmp):
+    conicStreamRemoval = feature.copy()
+    maxVal = np.amax(feature)
     for i in range(len(conicStreamRemoval)):
         for j in range(len(conicStreamRemoval[i])):
             if streamAmp[i][j] != 0:
-                conicStreamRemoval[i][j] += streamAmp[i][j]
-                if conicStreamRemoval[i][j] > 1:
-                    conicStreamRemoval[i][j] = 1
+                conicStreamRemoval[i][j] += streamAmp[i][j] * maxVal
+                if conicStreamRemoval[i][j] > maxVal:
+                    conicStreamRemoval[i][j] = maxVal
     return conicStreamRemoval
 
 
@@ -355,12 +357,13 @@ def skyViewStreamRemoval(conicFeature, streamAmp):
 IMPOUNDMENT
 """
 
-def impoundmentStreamRemoval(impFeature, streamAmp):
+#used for impoundment amplification filter and DEM ditch detection filter
+def impoundmentDEMStreamRemoval(impFeature, streamAmp):
     impStreamRemoval = impFeature.copy()
     for i in range(len(impStreamRemoval)):
         for j in range(len(impStreamRemoval[i])):
             if streamAmp[i][j] != 0:
-                impStreamRemoval[i][j] *= (1 - streamAmp[i][j] if streamAmp[i][j] > 0.7 else 0.3)
+                impStreamRemoval[i][j] = impStreamRemoval[i][j] * (1 - streamAmp[i][j]) if streamAmp[i][j] > 0.7 else impStreamRemoval[i][j] * 0.3
     return impStreamRemoval
 
 def impoundmentAmplification(arr):
