@@ -355,6 +355,14 @@ def skyViewStreamRemoval(conicFeature, streamAmp):
 IMPOUNDMENT
 """
 
+def impoundmentStreamRemoval(impFeature, streamAmp):
+    impStreamRemoval = impFeature.copy()
+    for i in range(len(impStreamRemoval)):
+        for j in range(len(impStreamRemoval[i])):
+            if streamAmp[i][j] != 0:
+                impStreamRemoval[i][j] *= (1 - streamAmp[i][j] if streamAmp[i][j] > 0.7 else 0.3)
+    return impStreamRemoval
+
 def impoundmentAmplification(arr):
     newArr = arr.copy()
     for i in range(len(arr)):
