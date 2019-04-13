@@ -337,6 +337,16 @@ def skyViewGabor(skyViewArr):
                 merged[i][j] += gabors[k][i][j]
     return merged
 
+def skyViewStreamRemoval(conicFeature, streamAmp):
+    conicStreamRemoval = conicFeature.copy()
+    for i in range(len(conicStreamRemoval)):
+        for j in range(len(conicStreamRemoval[i])):
+            if streamAmp[i][j] != 0:
+                conicStreamRemoval[i][j] += streamAmp[i][j]
+                if conicStreamRemoval[i][j] > 1:
+                    conicStreamRemoval[i][j] = 1
+    return conicStreamRemoval
+
 
 """------------------------------------------------------------------------------------------------------------------------------"""
 
@@ -375,9 +385,13 @@ def streamAmplification(arr):
         for j in range(len(streamAmp[i])):
             if streamAmp[i][j] < 14:
                 streamAmp[i][j] = 0
-    morphed = morph.grey_dilation(streamAmp, structure = create_circular_mask(25))
-    smoothedOut = gf(morphed, np.nanmean, footprint= create_circular_mask(10))
-    return smoothedOut
+    morphed = morph.grey_dilation(streamAmp, structure = create_circular_mask(35))
+    #smoothedOut = gf(morphed, np.nanmean, footprint= create_circular_mask(10))
+    minVal = np.amin(morphed)
+    morphed -= minVal
+    maxVal = np.amax(morphed)
+    morphed /= maxVal
+    return morphed
 
 
 """------------------------------------------------------------------------------------------------------------------------------"""
