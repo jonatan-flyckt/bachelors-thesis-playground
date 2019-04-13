@@ -187,6 +187,36 @@ def createBalancedMask(ditchArr, height, width):
 """------------------------------------------------------------------------------------------------------------------------------"""
 
 """
+DEM
+"""
+
+def DEMDitchDetection(arr):
+    newArr = arr.copy()
+    maxArr = gf(arr, np.amax, footprint=helpers.create_circular_mask(30))
+    minArr = gf(arr, np.amin, footprint=helpers.create_circular_mask(10))
+    meanArr = gf(arr, np.median, footprint=helpers.create_circular_mask(10))
+    minMaxDiff = arr.copy()
+    for i in range(len(arr)):
+        for j in range(len(arr[i])):
+            if minArr[i][j] < maxArr[i][j] - 3:
+                minMaxDiff[i][j] = 1
+            else:
+                minMaxDiff[i][j] = 0
+    closing = morph.binary_closing(minMaxDiff, structure=helpers.create_circular_mask(10))
+    closing2 = morph.binary_closing(closing, structure=helpers.create_circular_mask(10))
+    for i in range(len(arr)):
+        for j in range(len(arr[i])):
+            if arr[i][j] < meanArr[i][j] - 0.1:
+                newArr[i][j] = meanArr[i][j] - arr[i][j]
+            else:
+                newArr[i][j] = 0
+            if closing2[i][j] == 1:
+                newArr[i][j] = 0
+    return newArr
+
+"""------------------------------------------------------------------------------------------------------------------------------"""
+
+"""
 SKYVIEWFACTOR
 """
 
