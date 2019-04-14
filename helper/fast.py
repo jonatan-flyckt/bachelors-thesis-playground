@@ -14,8 +14,12 @@ from dask_image.ndfilters import generic_filter as d_gf
 
 from collections import deque
 
+from numpy import random, nanmax, argmax, unravel_index
+from scipy.spatial.distance import pdist, squareform
 from skimage.filters import gabor
+from skimage.restoration import  denoise_bilateral
 
+import datetime
 
 @jit
 def create_circular_mask(radius):
@@ -396,6 +400,14 @@ def customRemoveNoise(arr, radius, threshold, selfThreshold):
                    footprint=create_circular_mask(radius)).compute(scheduler='processes')
     return _customeRemoveNoise(arr, max_arr, np.copy(arr), threshold, selfThreshold)
 
+def find_max_distance(A):
+    """
+    Returns the maximum distance from  2x points
+    each point is represented by a x,y cord.
+    """
+    #assert(A.shape[1] == 2)
+    return nanmax(squareform(pdist(A)))
+
 
 @jit
 def removeIslands(arr, zoneSize, lowerIslandThreshold, upperIslandThreshold, ratioThreshold):
@@ -408,10 +420,10 @@ def removeIslands(arr, zoneSize, lowerIslandThreshold, upperIslandThreshold, rat
                 islandSize = len(island)
                 if islandSize < upperIslandThreshold:
                     cluster_distance = find_max_distance(island)
-                if upperIslandThreshold > islandSize > lowerIslandThreshold:
-                    print("island size:", islandSize)
-                    print("cluster distance:", cluster_distance)
-                    print("ratio:", islandSize / cluster_distance)
+                #if upperIslandThreshold > islandSize > lowerIslandThreshold:
+                    #print("island size:", islandSize)
+                    #print("cluster distance:", cluster_distance)
+                    #print("ratio:", islandSize / cluster_distance)
                 for k in range(islandSize):
                     examinedPoints.add(island[k])
                     if islandSize < upperIslandThreshold:
@@ -419,9 +431,8 @@ def removeIslands(arr, zoneSize, lowerIslandThreshold, upperIslandThreshold, rat
                             newArr[island[k][0]][island[k][1]] = 0
                         elif islandSize / cluster_distance > ratioThreshold:
                             newArr[island[k][0]][island[k][1]] = 0
-    return newArr
-
-
+    return newArr      
+        
 @jit
 def getIslandArray(arr, index, zoneSize):
     arrayOfPoints = []
@@ -493,3 +504,128 @@ def getIslandArray(arr, index, zoneSize):
                 FIFOQueue.append((i-1 - zoneSize, j-1 - zoneSize))
                 examinedElements.add((i-1 - zoneSize, j-1 - zoneSize))
     return arrayOfPoints
+
+
+
+# ----------------------- post -----------------
+
+#@jit("float64[:](float64[:,:], int32, int32, int32[:, :, :] )", nopython=True)
+@jit(nopython=True)
+def probaMeanFromMasks(arr, row, col, masks):
+    halfMask = len(masks[0]) // 2    
+    arrLenRow = len(arr)
+    arrLenCol = len(arr[row])
+    values = np.zeros(8)
+    elementAmounts = np.zeros(8)
+    for i in range(-halfMask , halfMask):
+        for j in range(-halfMask , halfMask):
+            if arrLenCol > col + j + 1 and col + j + 1 >= 0 and arrLenRow > row + i + 1 and row + i + 1 >= 0:
+                if masks[0][i + halfMask][j + halfMask] == 1:
+                    values[0] += arr[row + i][col + j]
+                    elementAmounts[0] += 1
+                elif masks[1][i + halfMask][j + halfMask] == 1:
+                    values[1] += arr[row + i][col + j]
+                    elementAmounts[1] += 1
+                elif masks[2][i + halfMask][j + halfMask] == 1:
+                    values[2] += arr[row + i][col + j]
+                    elementAmounts[2] += 1
+                elif masks[3][i + halfMask][j + halfMask] == 1:
+                    values[3] += arr[row + i][col + j]
+                    elementAmounts[3] += 1
+                elif masks[4][i + halfMask][j + halfMask] == 1:
+                    values[4] += arr[row + i][col + j]
+                    elementAmounts[4] += 1
+                elif masks[5][i + halfMask][j + halfMask] == 1:
+                    values[5] += arr[row + i][col + j]
+                    elementAmounts[5] += 1
+                elif masks[6][i + halfMask][j + halfMask] == 1:
+                    values[6] += arr[row + i][col + j]
+                    elementAmounts[6] += 1
+                elif masks[7][i + halfMask][j + halfMask] == 1:
+                    values[7] += arr[row + i][col + j]
+                    elementAmounts[7] += 1
+    for i in range(len(values)):
+        values[i] = values[i] / elementAmounts[i] if elementAmounts[i] != 0 else 0
+    return values
+
+
+#@jit("float64[:,:](float64[:,:], float64[:,:], int32[:,:,:], float64)", nopython=True)
+@jit(nopython=True)
+def _conicProbaPostProcessing(arr, maxArr, masks, threshold):
+    newArr = arr.copy()
+    amountOfUpdated = 0
+    examinedPoints = 0
+    for i in range(len(arr)):
+        for j in range(len(arr[i])):
+            if arr[i][j] < 0.5 and maxArr[i][j] > 0.6:
+                examinedPoints += 1
+                trueProba = probaMeanFromMasks(arr, i, j, masks)
+                
+                updatePixel = 0
+                if trueProba[0] > threshold and trueProba[4] > threshold:
+                    updatePixel = trueProba[0] if trueProba[0] > trueProba[4] else trueProba[4]
+                if trueProba[1] > threshold and trueProba[5] > threshold:
+                    updatePixelAgain = trueProba[1] if trueProba[1] > trueProba[5] else trueProba[5]
+                    if updatePixelAgain > updatePixel:
+                        updatePixel = updatePixelAgain
+                if trueProba[2] > threshold and trueProba[6] > threshold:
+                    updatePixelAgain = trueProba[2] if trueProba[6] > trueProba[2] else trueProba[6]
+                    if updatePixelAgain > updatePixel:
+                        updatePixel = updatePixelAgain
+                if trueProba[3] > threshold and trueProba[7] > threshold:
+                    updatePixelAgain = trueProba[3] if trueProba[3] > trueProba[7] else trueProba[7]
+                    if updatePixelAgain > updatePixel:
+                        updatePixel = updatePixelAgain
+                if updatePixel != 0:
+                    amountOfUpdated += 1
+                    if updatePixel < 0.5:
+                        updatePixel *= 1.4
+                    elif updatePixel < 0.55:
+                        updatePixel *= 1.35
+                    elif updatePixel < 0.6:
+                        updatePixel *= 1.3
+                    elif updatePixel < 0.65:
+                        updatePixel *= 1.25
+                    elif updatePixel < 0.7:
+                        updatePixel *= 1.2
+                    elif updatePixel < 0.75:
+                        updatePixel *= 1.15
+                    elif updatePixel < 0.85:
+                        updatePixel *= 1.1
+                    elif updatePixel < 0.9:
+                        updatePixel *= 1.05
+                    newArr[i][j] = updatePixel
+    return newArr
+
+@jit
+def conicProbaPostProcessing(arr, maskRadius, threshold):
+    masks = []
+    maxArr = d_gf(da.from_array(arr,chunks = (800,800)), np.nanmax, footprint=create_circular_mask(5))
+    for i in range(0, 8):
+        masks.append(create_conic_mask(maskRadius, i))
+
+    return _conicProbaPostProcessing(np.array(arr), np.array(maxArr), np.array(masks),threshold)
+    
+def __denoise_bilateral(arr):
+    return denoise_bilateral(arr, sigma_spatial=15, multichannel=False)
+
+#@jit("float64[:,:](float64[:,:])")
+def probaNoiseReduction(arr):
+    d = da.from_array(arr, chunks=(800,800))
+    #deNoise15 = denoise_bilateral(arr, sigma_spatial=15, multichannel=False)
+    return customRemoveNoise(d.map_overlap(__denoise_bilateral, depth=15).compute(), 10, 0.9, 0.5)
+    
+
+#@jit("float64[:,:](float64[:,:], int32, float64)")
+def probaPostProcess(arr, zoneSize, probaThreshold):
+    print("started:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
+    deNoise = probaNoiseReduction(arr)
+    print("deNoise done:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
+    gapFilled = conicProbaPostProcessing(conicProbaPostProcessing(deNoise, 10, 0.35), 6, 0.35)
+    print("gapFill done:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
+    zonesArr = probaToZones(gapFilled, zoneSize, probaThreshold)
+    print("probaToZone done:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
+    noIslands = removeIslands(zonesArr, zoneSize*5, 1500, 5000, 18)
+    noIslands = removeIslands(noIslands, zoneSize, 800, 3000, 18)
+    noIslands = removeIslands(noIslands, 0, 400, 1600, 14)
+    return noIslands
