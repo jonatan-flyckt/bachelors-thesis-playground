@@ -343,6 +343,9 @@ def skyViewHPMFGaborStreamRemoval(feature, streamAmp):
     maxVal = np.amax(feature)
     for i in range(len(conicStreamRemoval)):
         for j in range(len(conicStreamRemoval[i])):
+            print(type(streamAmp))
+            print(type(streamAmp[i][j]))
+            print(streamAmp)
             if streamAmp[i][j] != 0:
                 conicStreamRemoval[i][j] += streamAmp[i][j] * maxVal
                 if conicStreamRemoval[i][j] > maxVal:
