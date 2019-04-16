@@ -162,7 +162,7 @@ def createBalancedMask(ditchArr, height, width):
     for i in range(0, len(ditchArr), height):
         for j in range(0, len(ditchArr[i]), width):
             zoneContainsDitches = None
-            if (random.random() * 100 > 92.5):
+            if (random.random() * 100 > 99):
                 zoneContainsDitches = True
             for k in range(height):
                 for l in range(width):
@@ -520,8 +520,6 @@ def get_max_distance_from_list(clusters):
 
 def rasterToZones(arr, zoneSize, threshold):
     newArr = arr.copy()
-    print(len(arr))
-    print(len(arr[0]))
     for i in range(0, len(arr), zoneSize):
         for j in range(0, len(arr[i]), zoneSize):
             numberOfClassified = 0
