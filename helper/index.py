@@ -162,7 +162,7 @@ def createBalancedMask(ditchArr, height, width):
     for i in range(0, len(ditchArr), height):
         for j in range(0, len(ditchArr[i]), width):
             zoneContainsDitches = None
-            if (random.random() * 100 > 92.5):
+            if (random.random() * 100 > 99):
                 zoneContainsDitches = True
             for k in range(height):
                 for l in range(width):
@@ -347,7 +347,7 @@ def skyViewHPMFGaborStreamRemoval(feature, streamAmp):
             print(type(streamAmp[i][j]))
             print(streamAmp)
             if streamAmp[i][j] != 0:
-                conicStreamRemoval[i][j] += streamAmp[i][j] * maxVal
+                conicStreamRemoval[i][j] += (streamAmp[i][j] / 2) * maxVal
                 if conicStreamRemoval[i][j] > maxVal:
                     conicStreamRemoval[i][j] = maxVal
     return conicStreamRemoval
@@ -366,7 +366,7 @@ def impoundmentDEMStreamRemoval(impFeature, streamAmp):
     for i in range(len(impStreamRemoval)):
         for j in range(len(impStreamRemoval[i])):
             if streamAmp[i][j] != 0:
-                impStreamRemoval[i][j] = impStreamRemoval[i][j] * (1 - streamAmp[i][j]) if streamAmp[i][j] > 0.7 else impStreamRemoval[i][j] * 0.3
+                impStreamRemoval[i][j] = impStreamRemoval[i][j] * (1 - (streamAmp[i][j] / 2)) if streamAmp[i][j] > 0.7 else impStreamRemoval[i][j] * 0.3
     return impStreamRemoval
 
 def impoundmentAmplification(arr):
@@ -520,8 +520,6 @@ def get_max_distance_from_list(clusters):
 
 def rasterToZones(arr, zoneSize, threshold):
     newArr = arr.copy()
-    print(len(arr))
-    print(len(arr[0]))
     for i in range(0, len(arr), zoneSize):
         for j in range(0, len(arr[i]), zoneSize):
             numberOfClassified = 0

@@ -409,7 +409,6 @@ def find_max_distance(A):
     return nanmax(squareform(pdist(A)))
 
 
-@jit
 def removeIslands(arr, zoneSize, lowerIslandThreshold, upperIslandThreshold, ratioThreshold):
     newArr = arr.copy()
     examinedPoints = set()
