@@ -422,10 +422,6 @@ def removeIslands(arr, zoneSize, lowerIslandThreshold, upperIslandThreshold, rat
                 islandSize = len(island)
                 if islandSize < upperIslandThreshold:
                     cluster_distance = find_max_distance(island)
-                #if upperIslandThreshold > islandSize > lowerIslandThreshold:
-                    #print("island size:", islandSize)
-                    #print("cluster distance:", cluster_distance)
-                    #print("ratio:", islandSize / cluster_distance)
                 for k in range(islandSize):
                     examinedPoints.add(island[k])
                     if islandSize < upperIslandThreshold:
@@ -622,11 +618,12 @@ def probaPostProcess(arr, zoneSize, probaThreshold):
     print("started:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
     deNoise = probaNoiseReduction(arr)
     print("deNoise done:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
-    gapFilled = conicProbaPostProcessing(conicProbaPostProcessing(deNoise, 8, 0.35), 6, 0.35)
+    gapFilled = conicProbaPostProcessing(conicProbaPostProcessing(deNoise, 8, 0.35), 5, 0.3)
     print("gapFill done:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
-    zonesArr = probaToZones(gapFilled, zoneSize, probaThreshold)
+    zonesArr = probaToZones(gapFilled, zoneSize, 0.4)
     print("probaToZone done:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
-    noIslands = removeIslands(zonesArr, zoneSize*5, 1500, 5000, 18)
-    noIslands = removeIslands(noIslands, zoneSize, 800, 3000, 18)
-    noIslands = removeIslands(noIslands, 0, 400, 1600, 14)
+    noIslands = removeIslands(zonesArr, zoneSize*2, 1500, 10000, 30)
+    noIslands = removeIslands(noIslands, zoneSize, 1000, 5000, 20)
+    noIslands = removeIslands(noIslands, 0, 500, 3000, 18)
+    noIslands = removeIslands(noIslands, 0, 500, 1200, 14)
     return noIslands
