@@ -389,8 +389,11 @@ def probaToZones(arr, zoneSize, threshold):
 def _customeRemoveNoise(arr, max_arr, new_arr, threshold, selfThreshold):
     for i in range(len(arr)):
         for j in range(len(arr[i])):
-            if max_arr[i][j] < threshold and arr[i][j] < selfThreshold:
-                new_arr[i][j] *= 0.25
+            if max_arr[i][j] < threshold:
+                if arr[i][j] > selfThreshold:
+                    new_arr[i][j] *= 0.5
+                else:
+                    new_arr[i][j] *= 0.25
     return new_arr
 
 
@@ -611,8 +614,7 @@ def __denoise_bilateral(arr):
 #@jit("float64[:,:](float64[:,:])")
 def probaNoiseReduction(arr):
     d = da.from_array(arr, chunks=(800,800))
-    #deNoise15 = denoise_bilateral(arr, sigma_spatial=15, multichannel=False)
-    return customRemoveNoise(d.map_overlap(__denoise_bilateral, depth=15).compute(), 10, 0.9, 0.5)
+    return customRemoveNoise(d.map_overlap(__denoise_bilateral, depth=15).compute(), 10, 0.7, 0.4)
     
 
 #@jit("float64[:,:](float64[:,:], int32, float64)")
@@ -620,7 +622,7 @@ def probaPostProcess(arr, zoneSize, probaThreshold):
     print("started:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
     deNoise = probaNoiseReduction(arr)
     print("deNoise done:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
-    gapFilled = conicProbaPostProcessing(conicProbaPostProcessing(deNoise, 10, 0.35), 6, 0.35)
+    gapFilled = conicProbaPostProcessing(conicProbaPostProcessing(deNoise, 8, 0.35), 6, 0.35)
     print("gapFill done:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
     zonesArr = probaToZones(gapFilled, zoneSize, probaThreshold)
     print("probaToZone done:", str(datetime.datetime.now().hour), str(datetime.datetime.now().minute) )
