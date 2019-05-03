@@ -181,36 +181,6 @@ def createBalancedMask(ditchArr, height, width):
                     for n in range(width):
                         newArr[i+m][j+n] = 0
     return newArr
-
-def createBalancedMaskNew(ditchArr, height, width):
-    newArr = ditchArr.copy()
-    print("creating dilation")
-    dilatedArr = morph.binary_dilation(ditchArr, structure= create_circular_mask(8))
-    print("dilation created")
-    for i in range(0, len(ditchArr), height):
-        for j in range(0, len(ditchArr[i]), width):
-            zoneContainsDitches = None
-            if (random.random() * 100 > 99):
-                zoneContainsDitches = True
-            for k in range(height):
-                for l in range(width):
-                    if ditchArr[i+k][j+l] == 1:
-                        zoneContainsDitches = True
-                    if zoneContainsDitches == True:
-                        for m in range(height):
-                            for n in range(width):
-                                newArr[i+m][j+n] = 1
-                                if dilatedArr[i+m][j+n] == 1 and ditchArr[i+m][j+n] == 0:
-                                    newArr[i+m][j+n] = 0
-                    if zoneContainsDitches == True:
-                        break
-                if zoneContainsDitches == True:
-                    break
-            if zoneContainsDitches == None:
-                for m in range(height):
-                    for n in range(width):
-                        newArr[i+m][j+n] = 0
-    return newArr
                     
 
 
@@ -430,11 +400,10 @@ def streamAmplification(arr):
             if streamAmp[i][j] < 14:
                 streamAmp[i][j] = 0
     morphed = morph.grey_dilation(streamAmp, structure = create_circular_mask(35))
-    #smoothedOut = gf(morphed, np.nanmean, footprint= create_circular_mask(10))
     minVal = np.amin(morphed)
     morphed -= minVal
     maxVal = np.amax(morphed)
-    morphed /= maxVal
+    morphed /= maxVal if (maxVal != 0) else 1
     return morphed
 
 
